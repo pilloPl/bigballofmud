@@ -1,5 +1,6 @@
 package io.pillopl.bigballofmud;
 
+import io.pillopl.acl.toggles.NewModelToggles;
 import io.pillopl.bigballofmud.controllers.BookController;
 import io.pillopl.bigballofmud.dtos.BookDto;
 import io.pillopl.bigballofmud.dtos.BookRequest;
@@ -10,13 +11,15 @@ import io.pillopl.bigballofmud.exceptions.InvalidBookLendingStateException;
 import io.pillopl.bigballofmud.rabbitmq.QueueListener;
 import io.pillopl.bigballofmud.repositories.BookRepository;
 import io.pillopl.bigballofmud.services.HolderRentalFeeService;
+import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.togglz.junit.TogglzRule;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -31,7 +34,14 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {BigBallOfMud.class})
-public class BlackBoxScenarios {
+/**
+ * Task #4: Implement check between models
+ *  a) call observale behavior and use old model
+ *  b) call observable behavior and use new model
+ *  c) compare results -> test if there are equals
+ *  assertThat(..).containsExactlyInAnyOrderElementsOf(...) is your friend
+ */
+public class ModelsEqualityFromObservableBehaviorsCheck {
 
     @Autowired
     BookController bookController;
@@ -49,11 +59,14 @@ public class BlackBoxScenarios {
     QueueListener queueListener;
 
 
-    /**
-     *  Task #1: Implement those two tests (regularPatronCannotHoldRestrictedBooks and researcherPatronCanHoldRestrictedBooks):
-     *      a) observe behaviors after a command (exception/success) and a query (results/empty results)
-     *      b) automate them in tests
-     */
+    @Rule
+    public TogglzRule togglzRule = TogglzRule.allDisabled(NewModelToggles.class);
+
+    @After
+    public void cleanup() {
+        togglzRule.disableAll();
+    }
+
     @Test
     public void regularPatronCannotHoldRestrictedBooks() {
         //given
@@ -78,7 +91,7 @@ public class BlackBoxScenarios {
         patronWantsToHoldBook(aResearcherPatron, restrictedBook);
 
         //then
-        assertThat(placedOnHoldsBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(restrictedBook.getId());
+        assertThat(placedOnHoldBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(restrictedBook.getId());
 
     }
 
@@ -93,7 +106,7 @@ public class BlackBoxScenarios {
         patronWantsToHoldBook(aRegularPatron, circulatedBook);
 
         //then
-        assertThat(placedOnHoldsBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
+        assertThat(placedOnHoldBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
     }
 
     @Test
@@ -127,7 +140,7 @@ public class BlackBoxScenarios {
         patronWantsToHoldBookForOpenEndedHold(aResearcherPatron, aCirculatingBook);
 
         //then
-        assertThat(placedOnHoldsBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(aCirculatingBook.getId());
+        assertThat(placedOnHoldBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(aCirculatingBook.getId());
     }
 
     @Test
@@ -171,7 +184,7 @@ public class BlackBoxScenarios {
         patronWantsToHoldBook(aRegularPatron, book);
 
         //then
-        assertThat(placedOnHoldsBooksBy(aRegularPatron)).containsExactlyInAnyOrder(book.getId());
+        assertThat(placedOnHoldBooksBy(aRegularPatron)).containsExactlyInAnyOrder(book.getId());
 
     }
 
@@ -205,7 +218,7 @@ public class BlackBoxScenarios {
 
         //then
         assertThat(collectedBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
-        assertThat(placedOnHoldsBooksBy(aRegularPatron)).isEmpty();
+        assertThat(placedOnHoldBooksBy(aRegularPatron)).isEmpty();
     }
 
 
@@ -234,6 +247,9 @@ public class BlackBoxScenarios {
         assertThatExceptionOfType(InvalidBookCollectionStateException.class).isThrownBy(() -> patronWantsToCollectTheBook(aRegularPatron, circulatedBook, 555));
     }
 
+    /**
+     * This is not implemented - we did not touch "Return" command.
+     */
     @Test
     public void canReturnABook() {
         //given
@@ -250,65 +266,7 @@ public class BlackBoxScenarios {
 
         //then
         assertThat(collectedBooksBy(aRegularPatron)).isEmpty();
-        assertThat(placedOnHoldsBooksBy(aRegularPatron)).isEmpty();
-    }
-
-    @Test
-    public void isbnMustBeCorrect() {
-        //given
-        BookEntity book = fixtures.aCirculatingBookAvailableForLending();
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesISBN("", book));
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesISBN(null, book));
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesISBN("nonvalidIsbn", book));
-
-        //expect
-        assertThat(someoneChangesISBN("0123456789", book).getStatusCode()).isEqualTo(HttpStatus.OK);
-
-    }
-
-
-    @Test
-    public void titleMustBeNotEmptyAndNotLongerThan100() {
-        //given
-        BookEntity book = fixtures.aCirculatingBookAvailableForLending();
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesTitleTo("", book));
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesTitleTo(null, book));
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesTitleTo("veryLongTitleveryLongTitleveryLongTitleveryLongTitleveryLongTitleveryLongTitleveryLongTitleveryLongTitleveryLon", book));
-
-        //expect
-        assertThat(someoneChangesTitleTo("Valid Title", book).getStatusCode()).isEqualTo(HttpStatus.OK);
-
-    }
-
-    @Test
-    public void authorMustBeNotEmptyAndNotLongerThan60() {
-        //given
-        BookEntity book = fixtures.aCirculatingBookAvailableForLending();
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesAuthorTo("", book));
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesAuthorTo(null, book));
-
-        //expect
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> someoneChangesAuthorTo("verylongAuthorverylongAuthorverylongAuthorverylongAuthorverylongAuthorverylongAuthorverylongAuthorverylongAuthor", book));
-
-        //expect
-        assertThat(someoneChangesAuthorTo("Valid Author", book).getStatusCode()).isEqualTo(HttpStatus.OK);
-
+        assertThat(placedOnHoldBooksBy(aRegularPatron)).isEmpty();
     }
 
     @Test
@@ -325,7 +283,7 @@ public class BlackBoxScenarios {
 
         //then
         assertThat(collectedBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
-        assertThat(placedOnHoldsBooksBy(aRegularPatron)).isEmpty();
+        assertThat(placedOnHoldBooksBy(aRegularPatron)).isEmpty();
     }
 
     void patronWantsToHoldBook(BookHolderEntity patron, BookEntity... books) {
@@ -345,7 +303,7 @@ public class BlackBoxScenarios {
     }
 
 
-    List<UUID> placedOnHoldsBooksBy(BookHolderEntity aRegularPatron) {
+    List<UUID> placedOnHoldBooksBy(BookHolderEntity aRegularPatron) {
         return bookController.getPlacedOnHoldBooks(aRegularPatron.getId()).getBody().stream().map(BookDto::getBookId).collect(Collectors.toList());
     }
 
