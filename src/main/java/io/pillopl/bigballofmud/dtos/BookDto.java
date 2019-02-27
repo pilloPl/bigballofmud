@@ -1,9 +1,13 @@
 package io.pillopl.bigballofmud.dtos;
 
 import io.pillopl.bigballofmud.entities.BookEntity;
+import io.pillopl.newmodel.lending.application.readmodel.CollectedBooksView;
+import io.pillopl.newmodel.lending.application.readmodel.PlacedOnHoldBooksView;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @EqualsAndHashCode(of = "bookId")
@@ -30,6 +34,14 @@ public class BookDto {
         dto.setBookState(entity.getState());
         dto.setBookLendingState(entity.getLendingState());
         return dto;
+    }
+
+    public static List<BookDto> translateFrom(PlacedOnHoldBooksView placedOnHoldBooksView) {
+        return new ArrayList<>();
+    }
+
+    public static List<BookDto> translateFrom(CollectedBooksView placedOnHoldBooksView) {
+        return new ArrayList<>();
     }
 
 
