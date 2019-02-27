@@ -48,6 +48,22 @@ public class BlackBoxScenarios {
     @Autowired
     QueueListener queueListener;
 
+
+    /**
+     *  Task #1: Implement those two tests (regularPatronCannotHoldRestrictedBooks and researcherPatronCanHoldRestrictedBooks):
+     *      a) observe behaviors after a command (exception/success) and a query (results/empty results)
+     *      b) automate them in tests
+     */
+    @Test
+    public void regularPatronCannotHoldRestrictedBooks() {
+
+    }
+
+    @Test
+    public void researcherPatronCanHoldRestrictedBooks() {
+
+    }
+
     @Test
     public void patronCanHoldABook() {
         //given
@@ -108,31 +124,6 @@ public class BlackBoxScenarios {
 
     }
 
-    @Test
-    public void regularPatronCannotHoldRestrictedBooks() {
-        //given
-        BookEntity restrictedBook = fixtures.aRestrictedBookAvailableForLending();
-        //and
-        BookHolderEntity aRegularPatron = fixtures.aRegularPatron();
-
-        //expect
-        assertThatExceptionOfType(InvalidBookLendingStateException.class).isThrownBy(() -> patronWantsToHoldBook(aRegularPatron, restrictedBook));
-    }
-
-    @Test
-    public void researcherPatronCanHoldRestrictedBooks() {
-        //given
-        BookEntity restrictedBook = fixtures.aRestrictedBookAvailableForLending();
-        //and
-        BookHolderEntity aResearcherPatron = fixtures.aResearcherPatron();
-
-        //when
-        patronWantsToHoldBook(aResearcherPatron, restrictedBook);
-
-        //then
-        assertThat(placedOnHoldsBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(restrictedBook.getId());
-
-    }
 
     @Test
     public void patronCannotHoldBooksWhenThereAreTwoOverdueCollections() {
