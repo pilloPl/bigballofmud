@@ -39,6 +39,10 @@ public class Patron {
     @NonNull
     OverdueCollectedBooks overdueCollectedBooks;
 
+    public static Patron patron(PatronType patronType, PatronId patronId) {
+        return new Patron(patronType, patronId, new Holds(new HashSet<>()), new OverdueCollectedBooks(new HashSet<>()));
+    }
+
     public Optional<BookPlacedOnHold> placeOnHold(AvailableBook book, HoldDuration holdDuration) {
         return placeOnHold(book, holdDuration, allPolicies());
     }
