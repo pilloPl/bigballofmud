@@ -5,8 +5,12 @@ import io.pillopl.acl.toggles.NewModelToggles;
 import io.pillopl.bigballofmud.dtos.BookDto;
 import io.pillopl.bigballofmud.dtos.BookRequest;
 import io.pillopl.newmodel.lending.application.LendingFacade;
+import io.pillopl.newmodel.lending.domain.patron.PatronId;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class LendingACL {
 
@@ -20,23 +24,29 @@ public class LendingACL {
 
     public List<BookDto> booksPlacedOnHoldBy(UUID patronId, List<BookDto> oldModelResult) {
         if (NewModelToggles.RECONCILE_AND_USE_NEW_MODEL.isActive()) {
-            List<BookDto> newModelResult = new ArrayList<>();//TODO callNewModel
+            List<BookDto> newModelResult = BookDto.translateFrom(lendingFacade.booksPlacedOnHoldBy(new PatronId(patronId)));
             reconciliation.compare(toSet(oldModelResult), toSet(newModelResult));
             return newModelResult;
         }
         if (NewModelToggles.RECONCILE_NEW_MODEL.isActive()) {
-            List<BookDto> newModelResult = new ArrayList<>();//TODO callNewModel
+            List<BookDto> newModelResult = BookDto.translateFrom(lendingFacade.booksPlacedOnHoldBy(new PatronId(patronId)));
             reconciliation.compare(toSet(oldModelResult), toSet(newModelResult));
             return oldModelResult;
         }
         return oldModelResult;
     }
 
-    /**
-     * Task #3:
-     * Implement this. Make sure tests in LendingACL pass.
-     */
     public List<BookDto> booksCurrentlyCollectedBy(UUID patronId, List<BookDto> oldModelResult) {
+        if (NewModelToggles.RECONCILE_AND_USE_NEW_MODEL.isActive()) {
+            List<BookDto> newModelResult = BookDto.translateFrom(lendingFacade.booksCollectedBy(new PatronId(patronId)));
+            reconciliation.compare(toSet(oldModelResult), toSet(newModelResult));
+            return newModelResult;
+        }
+        if (NewModelToggles.RECONCILE_NEW_MODEL.isActive()) {
+            List<BookDto> newModelResult = BookDto.translateFrom(lendingFacade.booksCollectedBy(new PatronId(patronId)));
+            reconciliation.compare(toSet(oldModelResult), toSet(newModelResult));
+            return oldModelResult;
+        }
         return oldModelResult;
     }
 

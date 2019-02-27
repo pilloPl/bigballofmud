@@ -14,19 +14,19 @@ public class LendingFacade {
     private final LendingQueryFacade queryFacade;
 
     public Result execute(PlaceOnHoldCommand command) {
-        return null; //TODO call application layer
+        return placeOnHoldService.placeOnHold(command);
     }
 
     public Result execute(CollectCommand command) {
-        return null; //TODO call application layer
+        return collectService.placeOnHold(command);
     }
 
     public PlacedOnHoldBooksView booksPlacedOnHoldBy(PatronId patronId) {
-        return null; //TODO query read model
+        return queryFacade.placedOnHoldBy(patronId);
     }
 
     public CollectedBooksView booksCollectedBy(PatronId patronId) {
-        return null; //TODO query read model
+        return queryFacade.collectedBy(patronId);
     }
 
 }

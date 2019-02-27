@@ -3,6 +3,7 @@ package io.pillopl.newmodel.lending.application.readmodel;
 import io.pillopl.newmodel.catalogue.BookId;
 import io.pillopl.newmodel.lending.domain.patron.PatronId;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ public class PlacedOnHoldBooksView {
 
     private PatronId patronId;
 
-    private List<BookId> books = new ArrayList<>();
+    @Getter private List<BookId> books = new ArrayList<>();
 
     void addBook(BookId book) {
         books.add(book);
@@ -25,6 +26,7 @@ public class PlacedOnHoldBooksView {
     void removeBook(BookId book) {
         books.remove(book);
     }
+
 
 }
 
