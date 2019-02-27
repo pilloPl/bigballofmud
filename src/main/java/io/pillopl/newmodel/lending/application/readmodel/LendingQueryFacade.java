@@ -17,13 +17,10 @@ public class LendingQueryFacade {
 
     @EventListener
     public void placedOnHold(BookPlacedOnHold bookPlacedOnHold) {
-        addBookToHoldBooksView(bookPlacedOnHold);
     }
 
     @EventListener
     public void bookCollected(BookCollected bookCollected) {
-        addBookToCollectedBooksView(bookCollected);
-        removeBookFromHoldView(bookCollected);
     }
 
     public PlacedOnHoldBooksView placedOnHoldBy(PatronId patronId) {
@@ -34,20 +31,5 @@ public class LendingQueryFacade {
         return collectedBooks.get(patronId);
     }
 
-    private void addBookToHoldBooksView(BookPlacedOnHold bookPlacedOnHold) {
-        PlacedOnHoldBooksView view = holds.getOrDefault(bookPlacedOnHold.getPatronId(), new PlacedOnHoldBooksView(bookPlacedOnHold.getPatronId()));
-        view.addBook(bookPlacedOnHold.getBookId());
-        holds.put(bookPlacedOnHold.getPatronId(), view);
-    }
-
-    private void removeBookFromHoldView(BookCollected bookCollected) {
-        holds.get(bookCollected.getPatronId()).removeBook(bookCollected.getBookId());
-    }
-
-    private void addBookToCollectedBooksView(BookCollected bookCollected) {
-        CollectedBooksView view = collectedBooks.getOrDefault(bookCollected.getPatronId(), new CollectedBooksView(bookCollected.getPatronId()));
-        view.addBook(bookCollected.getBookId());
-        collectedBooks.put(bookCollected.getPatronId(), view);
-    }
 
 }
