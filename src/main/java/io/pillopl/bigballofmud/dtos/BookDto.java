@@ -1,16 +1,10 @@
 package io.pillopl.bigballofmud.dtos;
 
 import io.pillopl.bigballofmud.entities.BookEntity;
-import io.pillopl.newmodel.catalogue.BookId;
-import io.pillopl.newmodel.lending.application.readmodel.CollectedBooksView;
-import io.pillopl.newmodel.lending.application.readmodel.PlacedOnHoldBooksView;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
-
-import static java.util.stream.Collectors.toList;
 
 @EqualsAndHashCode(of = "bookId")
 public class BookDto {
@@ -26,10 +20,6 @@ public class BookDto {
     public BookDto() {
     }
 
-    public BookDto(BookId id) {
-        this.bookId = id.getUuid();
-    }
-
     public static BookDto from(BookEntity entity) {
         BookDto dto = new BookDto();
         dto.setTitle(entity.getTitle());
@@ -43,21 +33,6 @@ public class BookDto {
     }
 
 
-    public static List<BookDto> translateFrom(PlacedOnHoldBooksView placedOnHoldBooksView) {
-        return placedOnHoldBooksView
-                .getBooks()
-                .stream()
-                .map(BookDto::new)
-                .collect(toList());
-    }
-
-    public static List<BookDto> translateFrom(CollectedBooksView collectedBooksView) {
-        return collectedBooksView
-                .getBooks()
-                .stream()
-                .map(BookDto::new)
-                .collect(toList());
-    }
 
     public String getTitle() {
         return this.title;
