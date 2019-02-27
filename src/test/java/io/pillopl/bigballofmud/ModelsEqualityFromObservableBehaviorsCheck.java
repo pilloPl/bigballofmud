@@ -1,5 +1,6 @@
 package io.pillopl.bigballofmud;
 
+import io.pillopl.acl.AclConfiguration;
 import io.pillopl.acl.toggles.NewModelToggles;
 import io.pillopl.bigballofmud.controllers.BookController;
 import io.pillopl.bigballofmud.dtos.BookDto;
@@ -17,7 +18,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.togglz.junit.TogglzRule;
 
@@ -33,14 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {BigBallOfMud.class})
-/**
- * Task #4: Implement check between models
- *  a) call observale behavior and use old model
- *  b) call observable behavior and use new model
- *  c) compare results -> test if there are equals
- *  assertThat(..).containsExactlyInAnyOrderElementsOf(...) is your friend
- */
+@SpringBootTest(classes = {BigBallOfMud.class, AclConfiguration.class})
 public class ModelsEqualityFromObservableBehaviorsCheck {
 
     @Autowired
@@ -67,6 +60,7 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         togglzRule.disableAll();
     }
 
+
     @Test
     public void regularPatronCannotHoldRestrictedBooks() {
         //given
@@ -91,7 +85,7 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         patronWantsToHoldBook(aResearcherPatron, restrictedBook);
 
         //then
-        assertThat(placedOnHoldBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(restrictedBook.getId());
+        assertThat(oldModelPlacedOnHoldsBooksBy(aResearcherPatron)).containsExactlyInAnyOrderElementsOf(newModelPlacedOnHoldsBooksBy(aResearcherPatron));
 
     }
 
@@ -106,7 +100,7 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         patronWantsToHoldBook(aRegularPatron, circulatedBook);
 
         //then
-        assertThat(placedOnHoldBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
+        assertThat(oldModelPlacedOnHoldsBooksBy(aRegularPatron)).containsExactlyInAnyOrderElementsOf(newModelPlacedOnHoldsBooksBy(aRegularPatron));
     }
 
     @Test
@@ -140,7 +134,7 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         patronWantsToHoldBookForOpenEndedHold(aResearcherPatron, aCirculatingBook);
 
         //then
-        assertThat(placedOnHoldBooksBy(aResearcherPatron)).containsExactlyInAnyOrder(aCirculatingBook.getId());
+        assertThat(oldModelPlacedOnHoldsBooksBy(aResearcherPatron)).containsExactlyInAnyOrderElementsOf(newModelPlacedOnHoldsBooksBy(aResearcherPatron));
     }
 
     @Test
@@ -184,7 +178,7 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         patronWantsToHoldBook(aRegularPatron, book);
 
         //then
-        assertThat(placedOnHoldBooksBy(aRegularPatron)).containsExactlyInAnyOrder(book.getId());
+        assertThat(oldModelPlacedOnHoldsBooksBy(aRegularPatron)).containsExactlyInAnyOrderElementsOf(newModelPlacedOnHoldsBooksBy(aRegularPatron));
 
     }
 
@@ -217,8 +211,8 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         patronWantsToCollectTheBook(aRegularPatron, circulatedBook, 5);
 
         //then
-        assertThat(collectedBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
-        assertThat(placedOnHoldBooksBy(aRegularPatron)).isEmpty();
+        assertThat(oldModelCollectedBooksBy(aRegularPatron)).containsExactlyInAnyOrderElementsOf(newModelCollectedBooksBy(aRegularPatron));
+        assertThat(oldModelPlacedOnHoldsBooksBy(aRegularPatron)).containsExactlyInAnyOrderElementsOf(oldModelPlacedOnHoldsBooksBy(aRegularPatron));
     }
 
 
@@ -247,9 +241,6 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         assertThatExceptionOfType(InvalidBookCollectionStateException.class).isThrownBy(() -> patronWantsToCollectTheBook(aRegularPatron, circulatedBook, 555));
     }
 
-    /**
-     * This is not implemented - we did not touch "Return" command.
-     */
     @Test
     public void canReturnABook() {
         //given
@@ -265,9 +256,10 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         patronWantsToReturnTheBook(aRegularPatron, circulatedBook);
 
         //then
-        assertThat(collectedBooksBy(aRegularPatron)).isEmpty();
-        assertThat(placedOnHoldBooksBy(aRegularPatron)).isEmpty();
+        assertThat(oldModelCollectedBooksBy(aRegularPatron)).isEmpty();
+        assertThat(oldModelPlacedOnHoldsBooksBy(aRegularPatron)).isEmpty();
     }
+
 
     @Test
     public void canCollectABookListeningToRabbitMq() {
@@ -282,8 +274,8 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
         queueListener.collect(new BookRequest(circulatedBook.getId(), aRegularPatron.getId(), 10, false));
 
         //then
-        assertThat(collectedBooksBy(aRegularPatron)).containsExactlyInAnyOrder(circulatedBook.getId());
-        assertThat(placedOnHoldBooksBy(aRegularPatron)).isEmpty();
+        assertThat(oldModelCollectedBooksBy(aRegularPatron)).containsExactlyInAnyOrderElementsOf(newModelCollectedBooksBy(aRegularPatron));
+        assertThat(oldModelPlacedOnHoldsBooksBy(aRegularPatron)).containsExactlyInAnyOrderElementsOf(newModelPlacedOnHoldsBooksBy(aRegularPatron));
     }
 
     void patronWantsToHoldBook(BookHolderEntity patron, BookEntity... books) {
@@ -303,31 +295,28 @@ public class ModelsEqualityFromObservableBehaviorsCheck {
     }
 
 
-    List<UUID> placedOnHoldBooksBy(BookHolderEntity aRegularPatron) {
+    List<UUID> oldModelPlacedOnHoldsBooksBy(BookHolderEntity aRegularPatron) {
         return bookController.getPlacedOnHoldBooks(aRegularPatron.getId()).getBody().stream().map(BookDto::getBookId).collect(Collectors.toList());
     }
 
-    List<UUID> collectedBooksBy(BookHolderEntity aRegularPatron) {
+    List<UUID> newModelPlacedOnHoldsBooksBy(BookHolderEntity aRegularPatron) {
+        togglzRule.enable(NewModelToggles.RECONCILE_AND_USE_NEW_MODEL);
+        List<UUID> collect = oldModelPlacedOnHoldsBooksBy(aRegularPatron);
+        togglzRule.disable(NewModelToggles.RECONCILE_AND_USE_NEW_MODEL);
+        return collect;
+    }
+
+    List<UUID> oldModelCollectedBooksBy(BookHolderEntity aRegularPatron) {
         return bookController.getCollectedBooks(aRegularPatron.getId()).getBody().stream().map(BookDto::getBookId).collect(Collectors.toList());
     }
 
-    ResponseEntity someoneChangesTitleTo(String newTitle, BookEntity book) {
-        BookDto dto = BookDto.from(book);
-        dto.setTitle(newTitle);
-        return bookController.changeDescription(dto);
+    List<UUID> newModelCollectedBooksBy(BookHolderEntity aRegularPatron) {
+        togglzRule.enable(NewModelToggles.RECONCILE_AND_USE_NEW_MODEL);
+        List<UUID> collect = oldModelCollectedBooksBy(aRegularPatron);
+        togglzRule.disable(NewModelToggles.RECONCILE_AND_USE_NEW_MODEL);
+        return collect;
     }
 
-    ResponseEntity someoneChangesAuthorTo(String author, BookEntity book) {
-        BookDto dto = BookDto.from(book);
-        dto.setAuthor(author);
-        return bookController.changeDescription(dto);
-    }
-
-    ResponseEntity someoneChangesISBN(String newIsbn, BookEntity book) {
-        BookDto dto = BookDto.from(book);
-        dto.setIsbn(newIsbn);
-        return bookController.changeState(dto);
-    }
 
 
     void patronHasTwoCollectedBooksTillYesterday(BookHolderEntity aRegularPatron) {

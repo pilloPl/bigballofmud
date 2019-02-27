@@ -4,7 +4,12 @@ import io.pillopl.acl.reconciliation.Reconciliation;
 import io.pillopl.acl.toggles.NewModelToggles;
 import io.pillopl.bigballofmud.dtos.BookDto;
 import io.pillopl.bigballofmud.dtos.BookRequest;
+import io.pillopl.newmodel.catalogue.BookId;
+import io.pillopl.newmodel.lending.application.CollectCommand;
 import io.pillopl.newmodel.lending.application.LendingFacade;
+import io.pillopl.newmodel.lending.application.PlaceOnHoldCommand;
+import io.pillopl.newmodel.lending.domain.patron.CollectDuration;
+import io.pillopl.newmodel.lending.domain.patron.HoldDuration;
 import io.pillopl.newmodel.lending.domain.patron.PatronId;
 
 import java.util.HashSet;
@@ -55,7 +60,17 @@ public class LendingACL {
         return new HashSet<>(books);
     }
 
-    public void placeOnHold(BookRequest bookRequest) {
 
+    public void createHold(Integer days, boolean openEndedHold, UUID holderId, UUID bookId) {
+        if(days == null) {
+            lendingFacade.execute(new PlaceOnHoldCommand(new BookId(bookId), new PatronId(holderId), HoldDuration.openEnded()));
+        } else {
+            lendingFacade.execute(new PlaceOnHoldCommand(new BookId(bookId), new PatronId(holderId), HoldDuration.forDays(days)));
+
+        }
+    }
+
+    public void collect(BookRequest bookRequest) {
+        lendingFacade.execute(new CollectCommand(CollectDuration.days(bookRequest.getDays()), new BookId(bookRequest.getBookId()), new PatronId(bookRequest.getHolderId())));
     }
 }

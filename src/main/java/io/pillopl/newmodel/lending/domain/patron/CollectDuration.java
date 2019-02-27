@@ -21,4 +21,7 @@ public class CollectDuration {
         this.period = period;
     }
 
+    public static CollectDuration days(Integer days) {
+        return new CollectDuration(Period.ofDays(days));
+    }
 }

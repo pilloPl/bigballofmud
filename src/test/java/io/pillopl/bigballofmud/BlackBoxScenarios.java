@@ -1,5 +1,7 @@
 package io.pillopl.bigballofmud;
 
+import io.pillopl.acl.AclConfiguration;
+import io.pillopl.acl.toggles.NewModelToggles;
 import io.pillopl.bigballofmud.controllers.BookController;
 import io.pillopl.bigballofmud.dtos.BookDto;
 import io.pillopl.bigballofmud.dtos.BookRequest;
@@ -10,6 +12,8 @@ import io.pillopl.bigballofmud.exceptions.InvalidBookLendingStateException;
 import io.pillopl.bigballofmud.rabbitmq.QueueListener;
 import io.pillopl.bigballofmud.repositories.BookRepository;
 import io.pillopl.bigballofmud.services.HolderRentalFeeService;
+import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.togglz.junit.TogglzRule;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -30,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {BigBallOfMud.class})
+@SpringBootTest(classes = {BigBallOfMud.class, AclConfiguration.class})
 public class BlackBoxScenarios {
 
     @Autowired
@@ -47,6 +52,14 @@ public class BlackBoxScenarios {
 
     @Autowired
     QueueListener queueListener;
+
+    @Rule
+    public TogglzRule togglzRule = TogglzRule.allDisabled(NewModelToggles.class);
+
+    @After
+    public void setup() {
+        togglzRule.disableAll();
+    }
 
 
     /**
