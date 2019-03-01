@@ -1,14 +1,15 @@
 package io.pillopl.bigballofmud.dtos;
 
 import io.pillopl.bigballofmud.entities.BookEntity;
+import io.pillopl.newmodel.catalogue.BookId;
 import io.pillopl.newmodel.lending.application.readmodel.CollectedBooksView;
 import io.pillopl.newmodel.lending.application.readmodel.PlacedOnHoldBooksView;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(of = "bookId")
 public class BookDto {
@@ -20,6 +21,10 @@ public class BookDto {
     private UUID bookId;
     private BookEntity.BookState bookState;
     private BookEntity.BookLendingState bookLendingState;
+
+    public BookDto(BookId bookId) {
+        this.bookId = bookId.getUuid();
+    }
 
     public BookDto() {
     }
@@ -37,13 +42,20 @@ public class BookDto {
     }
 
     public static List<BookDto> translateFrom(PlacedOnHoldBooksView placedOnHoldBooksView) {
-        return new ArrayList<>();
+        return placedOnHoldBooksView
+                .getBooks()
+                .stream()
+                .map(BookDto::new)
+                .collect(Collectors.toList());
     }
 
-    public static List<BookDto> translateFrom(CollectedBooksView placedOnHoldBooksView) {
-        return new ArrayList<>();
+    public static List<BookDto> translateFrom(CollectedBooksView collectedBooksView) {
+        return collectedBooksView
+                .getBooks()
+                .stream()
+                .map(BookDto::new)
+                .collect(Collectors.toList());
     }
-
 
     public String getTitle() {
         return this.title;

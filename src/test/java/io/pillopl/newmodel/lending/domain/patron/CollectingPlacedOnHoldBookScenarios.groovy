@@ -9,6 +9,7 @@ import java.time.Period
 import static io.pillopl.newmodel.lending.domain.patron.CollectDuration.forOneMonth
 import static io.pillopl.newmodel.lending.domain.patron.Fixtures.aRegularPatron
 import static io.pillopl.newmodel.lending.domain.patron.Fixtures.circulatingBook
+import static io.pillopl.newmodel.lending.domain.patron.HoldDuration.forTenDays
 
 class CollectingPlacedOnHoldBookScenarios extends Specification {
 
@@ -17,7 +18,16 @@ class CollectingPlacedOnHoldBookScenarios extends Specification {
      * Remember that Fixtures, for instance aRegularPatron() should be changed so that it returns a regular patron in the meaning of your new model.
      */
     def 'can collect an existing hold'() {
-
+        given:
+            Patron patron = aRegularPatron()
+        and:
+            AvailableBook book = circulatingBook()
+        and:
+            patron.placeOnHold(book, forTenDays())
+        when:
+            Optional<BookCollected> event = patron.collect(book.bookId, forOneMonth())
+        then:
+            event.isPresent()
     }
 
     def 'cannot collect when book is not on hold'() {

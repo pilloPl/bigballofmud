@@ -21,11 +21,13 @@ public class LendingACL {
     public List<BookDto> booksPlacedOnHoldBy(UUID patronId, List<BookDto> oldModelResult) {
         if (NewModelToggles.RECONCILE_AND_USE_NEW_MODEL.isActive()) {
             List<BookDto> newModelResult = new ArrayList<>();//TODO callNewModel
+            newModelResult.add(new BookDto());
             reconciliation.compare(toSet(oldModelResult), toSet(newModelResult));
             return newModelResult;
         }
         if (NewModelToggles.RECONCILE_NEW_MODEL.isActive()) {
             List<BookDto> newModelResult = new ArrayList<>();//TODO callNewModel
+            newModelResult.add(new BookDto());
             reconciliation.compare(toSet(oldModelResult), toSet(newModelResult));
             return oldModelResult;
         }

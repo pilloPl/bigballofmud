@@ -56,12 +56,28 @@ public class BlackBoxScenarios {
      */
     @Test
     public void regularPatronCannotHoldRestrictedBooks() {
+        //given
+        BookEntity restrictedBook = fixtures.aRestrictedBookAvailableForLending();
+        //and
+        BookHolderEntity aRegularPatron = fixtures.aRegularPatron();
+
+        //when
+        assertThatExceptionOfType(InvalidBookLendingStateException.class).isThrownBy(() ->patronWantsToHoldBook(aRegularPatron, restrictedBook));
 
     }
 
     @Test
     public void researcherPatronCanHoldRestrictedBooks() {
+        //given
+        BookEntity restrictedBook = fixtures.aRestrictedBookAvailableForLending();
+        //and
+        BookHolderEntity researcherPatroin = fixtures.aResearcherPatron();
 
+        //when
+        patronWantsToHoldBook(researcherPatroin, restrictedBook);
+
+        //then
+        assertThat(placedOnHoldsBooksBy(researcherPatroin)).containsExactlyInAnyOrder(restrictedBook.getId());
     }
 
     @Test
