@@ -1,5 +1,6 @@
 package io.pillopl.bigballofmud;
 
+import io.pillopl.acl.AclConfiguration;
 import io.pillopl.bigballofmud.controllers.BookController;
 import io.pillopl.bigballofmud.dtos.BookDto;
 import io.pillopl.bigballofmud.dtos.BookRequest;
@@ -30,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {BigBallOfMud.class})
+@SpringBootTest(classes = {BigBallOfMud.class, AclConfiguration.class})
 public class BlackBoxScenarios {
 
     @Autowired
@@ -56,12 +57,28 @@ public class BlackBoxScenarios {
      */
     @Test
     public void regularPatronCannotHoldRestrictedBooks() {
+        //given
+        BookEntity restrictedBook = fixtures.aRestrictedBookAvailableForLending();
+        //and
+        BookHolderEntity aRegularPatron = fixtures.aRegularPatron();
+
+        //when
+        assertThatExceptionOfType(InvalidBookLendingStateException.class).isThrownBy(() ->patronWantsToHoldBook(aRegularPatron, restrictedBook));
 
     }
 
     @Test
     public void researcherPatronCanHoldRestrictedBooks() {
+        //given
+        BookEntity restrictedBook = fixtures.aRestrictedBookAvailableForLending();
+        //and
+        BookHolderEntity researcherPatroin = fixtures.aResearcherPatron();
 
+        //when
+        patronWantsToHoldBook(researcherPatroin, restrictedBook);
+
+        //then
+        assertThat(placedOnHoldsBooksBy(researcherPatroin)).containsExactlyInAnyOrder(restrictedBook.getId());
     }
 
     @Test
