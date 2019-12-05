@@ -143,6 +143,22 @@ public class LendingAclTest {
         noReconciliationWasDone();
     }
 
+	@Test
+	public void shouldUseOldModelEvenIfNewOneThrowsException() {
+		//given
+		justReconciliationIsEnabled();
+		//and
+		askingForCollectedBooksThrowsException();
+
+		//when
+		List<BookDto> books = askingForCollectedBooks();
+
+		//then
+		assertThat(books).isEqualTo(oldModelResult);
+		//and
+		noReconciliationWasDone();
+	}
+
     void noReconciliationWasDone() {
         verifyZeroInteractions(reconciliation);
     }
@@ -172,6 +188,10 @@ public class LendingAclTest {
         togglzRule.disable(NewModelToggles.RECONCILE_AND_USE_NEW_MODEL);
         togglzRule.disable(NewModelToggles.RECONCILE_NEW_MODEL);
     }
+
+	void askingForCollectedBooksThrowsException() {
+		when(lendingFacade.booksCollectedBy(new PatronId(patronId))).thenThrow(new RuntimeException("New model collect exception!"));
+	}
 
     void newModelReturnsNewResults() {
 
